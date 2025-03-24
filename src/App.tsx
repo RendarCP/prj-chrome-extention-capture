@@ -33,14 +33,52 @@ function App() {
         currentWindow: true,
       });
 
-      if (!tab.url) return;
+      if (!tab.id || !tab.url) return;
 
       if (isRestrictedUrl(tab.url)) {
         setError("이 페이지에서는 캡처할 수 없습니다.");
         return;
       }
 
+      // 스크롤바 숨기기
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          const style = document.createElement("style");
+          style.id = "hide-scrollbar-style";
+          style.textContent = `
+            ::-webkit-scrollbar {
+              display: none !important;
+            }
+            * {
+              scrollbar-width: none !important;
+              -ms-overflow-style: none !important;
+            }
+            body {
+              overflow: -moz-scrollbars-none !important;
+            }
+          `;
+          document.head.appendChild(style);
+        },
+      });
+
+      // 스타일이 적용될 시간을 주기 위해 잠시 대기
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // 캡처 실행
       const dataUrl = await chrome.tabs.captureVisibleTab();
+
+      // 스크롤바 복원
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          const style = document.getElementById("hide-scrollbar-style");
+          if (style) {
+            style.remove();
+          }
+        },
+      });
+
       setTempScreenshot(dataUrl);
     } catch (error) {
       console.error("스크린샷 캡처 실패:", error);
@@ -68,6 +106,28 @@ function App() {
         setError("이 페이지에서는 캡처할 수 없습니다.");
         return;
       }
+
+      // 스크롤바 숨기기
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          const style = document.createElement("style");
+          style.id = "hide-scrollbar-style";
+          style.textContent = `
+            ::-webkit-scrollbar {
+              display: none !important;
+            }
+            * {
+              scrollbar-width: none !important;
+              -ms-overflow-style: none !important;
+            }
+            body {
+              overflow: -moz-scrollbars-none !important;
+            }
+          `;
+          document.head.appendChild(style);
+        },
+      });
 
       // Content script 주입
       await chrome.scripting.executeScript({
@@ -233,6 +293,17 @@ function App() {
           y += viewportHeight;
         }
       }
+
+      // 캡처 완료 후 스크롤바 복원
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: () => {
+          const style = document.getElementById("hide-scrollbar-style");
+          if (style) {
+            style.remove();
+          }
+        },
+      });
 
       const finalImage = canvas.toDataURL();
       setTempScreenshot(finalImage);

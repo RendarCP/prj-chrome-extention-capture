@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "스크린샷 캡처",
+  "name": "Screenshot Editor",
   "version": "1.0",
-  "description": "웹 페이지의 스크린샷을 캡처하고 편집하는 확장 프로그램",
+  "description": "캡처 및 편집 도구",
   "action": {
     "default_popup": "index.html"
   },
-  "permissions": ["activeTab", "scripting", "tabs", "storage"],
+  "permissions": ["activeTab", "storage", "scripting", "tabs"],
   "host_permissions": ["<all_urls>"],
   "icons": {
     "16": "icon16.png",
